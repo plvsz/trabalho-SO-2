@@ -54,48 +54,49 @@ int handle_page_fault(int page)
      * 8. Retornar número do frame.
      */
 
-    int frame = find_free_frame();
+     int frame = find_free_frame();
 
-    if (frame == -1) {
+     if (frame == -1) {
         int victim_page = select_victim_page();
 
-        /*
-         * TODO:
-         * Obter o quadro da página vítima.
-         * Invalidar tabela e TLB.
-         */
+        frame = page_table_get_frame(victim_page);
 
-        (void) victim_page;
-
-        frame = 0;
+        page_table_invalidate(victim_page);
+        tlb_remove(victim_page);
     }
+ 
+     if (backing == NULL) {
+         fprintf(stderr, "Erro interno: BACKING_STORE nao inicializado.\n");
+         exit(1);
+     }
+ 
+     fseek(backing, page * PAGE_SIZE, SEEK_SET);
+     fread(physical_memory[frame], PAGE_SIZE, 1, backing);
+ 
+     frame_to_page[frame] = page;
+     page_table_update(page, frame);
+ 
+     return frame;
+ }
 
-    /*
-     * TODO:
-     * Fazer fseek para page * PAGE_SIZE.
-     * Fazer fread de PAGE_SIZE bytes para physical_memory[frame].
-     */
-
-    if (backing == NULL) {
-        fprintf(stderr, "Erro interno: BACKING_STORE nao inicializado.\n");
-        exit(1);
-    }
-
-    (void) page;
-
-    return frame;
-}
-
-int select_victim_page(void)
-{
-    /*
-     * TODO:
-     * Selecionar a página válida com menor aging_counter.
-     * Em caso de empate, qualquer critério consistente pode ser usado.
-     */
-
-    return 0;
-}
+ int select_victim_page(void)
+ {
+     int victim = -1;
+     unsigned char min_aging = 0xFF;
+ 
+     for (int i = 0; i < PAGE_TABLE_SIZE; i++) {
+         if (page_table_is_valid(i)) {
+             unsigned char aging = page_table_get_aging_counter(i);
+ 
+             if (victim == -1 || aging < min_aging) {
+                 min_aging = aging;
+                 victim = i;
+             }
+         }
+     }
+ 
+     return victim;
+ }
 
 signed char read_memory(int frame, int offset)
 {
@@ -104,9 +105,7 @@ signed char read_memory(int frame, int offset)
      * Retornar o byte armazenado em physical_memory[frame][offset].
      */
 
-    (void) frame;
-    (void) offset;
-    return 0;
+     return physical_memory[frame][offset];
 }
 
 int get_page_loaded_in_frame(int frame)
