@@ -7,15 +7,7 @@
 #include "memory.h"
 #include "statistics.h"
 
-int main(void)
-{
-    FILE *backing = fopen(BACKING_STORE_PATH, "rb");
 
-    if (backing == NULL) {
-        fprintf(stderr, "Erro: nao foi possivel abrir %s\n", BACKING_STORE_PATH);
-        fprintf(stderr, "Execute antes: cd data && python3 generate_data.py\n");
-        return 1;
-    }
 
     page_table_init();
     tlb_init();
@@ -33,9 +25,9 @@ int main(void)
          * TODO: Implementar lógica de obtenção do número da página 
          * e do offset.
          */
-        logical_address = 0;
-        int page = 0;
-        int offset = 0;
+        logical_address = logical_address & 0xFFFF;
+        int offset = logical_address & 0xFF;
+        int page = (logical_address >> 8) & 0xFF;
 
         int frame = tlb_lookup(page);
 
@@ -65,7 +57,7 @@ int main(void)
         /*
         * TODO: Implementar cálculo do physical_address.
         */
-        int physical_address = 0;
+        int physical_address = frame * FRAME_SIZE + offset;
         signed char value = read_memory(frame, offset);
 
         printf("Logical address: %d Physical address: %d Value: %d\n",

@@ -1,0 +1,17 @@
+# Binário compilado
+/vm
+/vm.exe
+*.o
+*.obj
+
+# Dados gerados (execute: cd data && python3 generate_data.py)
+data/BACKING_STORE.bin
+
+# Relatório gerado
+report/*.pdf
+
+# Sistema / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
